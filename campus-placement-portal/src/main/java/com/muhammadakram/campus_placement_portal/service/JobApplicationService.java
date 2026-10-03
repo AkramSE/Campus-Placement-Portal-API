@@ -12,24 +12,21 @@ public class JobApplicationService {
     @Autowired
     private JobApplicationRepository jobApplicationRepository;
 
-    // Student: Apply karega
-    public JobApplication applyForJob(JobApplication application) {
-        application.setStatus("PENDING");
+    public JobApplication saveApplication(JobApplication application) {
         return jobApplicationRepository.save(application);
     }
 
-    // HR: Sari applications dekhega
-    public List<JobApplication> getAllApplications() {
-        return jobApplicationRepository.findAll();
+    public List<JobApplication> getApplicationsForCompany(String companyName) {
+        return jobApplicationRepository.findByCompanyName(companyName);
     }
 
-    // HR: Application Accept ya Reject karega (Naya Method)
-    public JobApplication updateStatus(Long id, String newStatus) {
-        JobApplication app = jobApplicationRepository.findById(id).orElse(null);
-        if (app != null) {
-            app.setStatus(newStatus); // Status update ho raha hai
-            return jobApplicationRepository.save(app);
+    // NAYA METHOD: Status Update Karne Ke Liye
+    public JobApplication updateApplicationStatus(Long id, String status) {
+        JobApplication application = jobApplicationRepository.findById(id).orElse(null);
+        if (application != null) {
+            application.setStatus(status); // PENDING se ACCEPTED ya REJECTED ho jayega
+            return jobApplicationRepository.save(application);
         }
-        throw new RuntimeException("Application nahi mili!");
+        return null;
     }
 }

@@ -2,6 +2,7 @@ package com.muhammadakram.campus_placement_portal.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Data
 @Entity
@@ -12,11 +13,17 @@ public class Job {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String title; // e.g., "Software Engineering Intern"
+    private String title;
 
-    private String companyName; // e.g., "10Pearls"
+    // React se aane wale data ko map karne ke liye
+    @JsonProperty("company_name")
+    private String companyName;
 
-    private String description; // Job ki details
+    private String description;
 
-    private String status; // OPEN ya CLOSED
+    private String status;
+
+    private String jobType;
+
+    private String deadline;
 }
