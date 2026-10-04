@@ -138,7 +138,6 @@ public class UserController {
 
         User existingUser = userOptional.get();
 
-        // Agar naya data aaya hai toh usay update kar do
         if (updatedData.getName() != null) {
             existingUser.setName(updatedData.getName());
         }
@@ -149,9 +148,30 @@ public class UserController {
             existingUser.setProfileImage(updatedData.getProfileImage());
         }
 
-        // Database mein update save karna
         User savedUser = userRepository.save(existingUser);
-
         return ResponseEntity.ok(savedUser);
+    }
+
+    // ==========================================
+    // 6. GET ALL USERS (Admin Power - View Everyone)
+    // ==========================================
+    @GetMapping("/all")
+    public ResponseEntity<?> getAllUsers() {
+        return ResponseEntity.ok(userRepository.findAll());
+    }
+
+    // ==========================================
+    // 7. DELETE USER (Admin Power - Ban/Remove User)
+    // ==========================================
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<?> deleteUser(@PathVariable Long id) {
+        Optional<User> userOptional = userRepository.findById(id);
+
+        if (!userOptional.isPresent()) {
+            return ResponseEntity.badRequest().body("Error: User not found!");
+        }
+
+        userRepository.deleteById(id);
+        return ResponseEntity.ok("User has been deleted successfully!");
     }
 }
