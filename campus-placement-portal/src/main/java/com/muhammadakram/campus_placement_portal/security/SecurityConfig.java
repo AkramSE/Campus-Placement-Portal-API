@@ -3,6 +3,7 @@ package com.muhammadakram.campus_placement_portal.security;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod; // NAYA IMPORT ADD KIYA HAI
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -20,42 +21,38 @@ import java.util.Arrays;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    // Humara naya Guard yahan aa gaya
     @Autowired
     private JwtRequestFilter jwtRequestFilter;
 
-    // 1. Password ko Encrypt (Hash) karne ka tool
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    // 2. Security Rules Setup (THE FINAL LOCKDOWN 🔒)
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .csrf(csrf -> csrf.disable()) // API ke liye CSRF disable karna zaroori hota hai
+                .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        // Sirf Login aur Register ko bina token ke allow karo
-                        .requestMatchers("/api/users/login", "/api/users/register").permitAll()
-                        // Baqi har API (Jobs, Applications, waghera) ke liye TOKEN LAZMI hai!
+                        // NAYA CODE: Browser ki preflight (OPTIONS) requests ko hamesha allow karna zaroori hai
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        // Aapke public endpoints
+                        .requestMatchers("/api/users/login", "/api/users/register", "/api/users/forgot-password","/api/users/reset-password").permitAll()
                         .anyRequest().authenticated()
                 )
-                // Spring Security ko batana ke ab hum Sessions nahi balke Tokens (Stateless) use kar rahe hain
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
-        // Darwaze (UsernamePassword filter) se pehle apne JWT Guard ko khara kar diya
         http.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
-    // 3. React Frontend ko Backend se connect karne ki ijazat (CORS Policy)
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173")); // Aapka React URL
+
+        configuration.setAllowedOriginPatterns(Arrays.asList("http://localhost:*"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);

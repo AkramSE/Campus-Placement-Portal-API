@@ -19,5 +19,19 @@ public class User {
 
     private String password;
 
-    private String role; // STUDENT, HR, ya ADMIN
+    private String role; // STUDENT, COMPANY, ya ADMIN
+
+    // ==========================================
+    // Naya column OTP save karne ke liye
+    // ==========================================
+    private String otp;
+
+    // ==========================================
+    // Profile Update ke naye columns
+    // ==========================================
+    private String phone;
+
+    @Lob // @Lob ka matlab hai ke isme bari file (tasweer) save hogi
+    @Column(columnDefinition = "LONGTEXT")
+    private String profileImage;
 }
