@@ -1,5 +1,7 @@
 package com.muhammadakram.campus_placement_portal.security;
 
+import com.muhammadakram.campus_placement_portal.entity.User;
+import com.muhammadakram.campus_placement_portal.repository.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -20,38 +22,46 @@ public class JwtRequestFilter extends OncePerRequestFilter {
     @Autowired
     private JwtUtil jwtUtil;
 
+    @Autowired
+    private UserRepository userRepository;
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
 
-        // 1. React se aane wali request mein se "Authorization" header nikalna
         final String authorizationHeader = request.getHeader("Authorization");
 
         String email = null;
         String jwt = null;
 
-        // 2. Check karna ke header mein "Bearer " likha hai ya nahi
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-            jwt = authorizationHeader.substring(7); // "Bearer " ke baad wala token nikal liya
+            jwt = authorizationHeader.substring(7);
             try {
-                email = jwtUtil.extractEmail(jwt); // Token me se email nikali
+                email = jwtUtil.extractEmail(jwt);
             } catch (Exception e) {
                 System.out.println("Invalid or Expired Token");
             }
         }
 
-        // 3. Agar token sahi hai aur user abhi tak authenticate nahi hua
         if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             if (jwtUtil.isTokenValid(jwt, email)) {
-                // Spring Security ko batana ke "Yeh banda asli hai, isay andar aane do"
-                UsernamePasswordAuthenticationToken authToken =
-                        new UsernamePasswordAuthenticationToken(email, null, new ArrayList<>());
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authToken);
+
+                // UserRepository se direct user nikal liya
+                User user = userRepository.findByEmail(email);
+
+                if (user != null) {
+                    UsernamePasswordAuthenticationToken authToken =
+                            new UsernamePasswordAuthenticationToken(email, null, new ArrayList<>());
+                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                } else {
+                    // Agar user delete ya ban ho chuka hai toh request block kar do
+                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized: User account has been removed or banned.");
+                    return;
+                }
             }
         }
 
-        // Request ko aage barha do
         chain.doFilter(request, response);
     }
 }
